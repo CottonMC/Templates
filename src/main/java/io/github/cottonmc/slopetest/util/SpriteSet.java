@@ -1,16 +1,16 @@
 package io.github.cottonmc.slopetest.util;
 
+import java.util.List;
+import java.util.Map;
+import java.util.Random;
+
+import io.netty.util.internal.ThreadLocalRandom;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.render.model.BakedModel;
 import net.minecraft.client.render.model.BakedQuad;
 import net.minecraft.client.texture.Sprite;
 import net.minecraft.util.Identifier;
 import net.minecraft.util.math.Direction;
-
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Random;
 
 public class SpriteSet {
 	private Sprite global;
@@ -20,19 +20,29 @@ public class SpriteSet {
 	public static final Sprite FALLBACK = MinecraftClient.getInstance().getSpriteAtlas().getSprite(new Identifier("minecraft:block/scaffolding_top"));
 
 	public SpriteSet(Sprite allSprite, boolean hasColor) {
-		this.global = allSprite;
-		singleSprite = true;
-		globalHasColor = hasColor;
+	    prepare(allSprite, hasColor);
 	}
 
-	public SpriteSet(BakedModel model) {
-		Random rand = new Random();
-		quads = new HashMap<>();
-		for (Direction dir : Direction.values()) {
-			List<BakedQuad> quads = model.getQuads(null, dir, rand);
-			if (!quads.isEmpty()) this.quads.put(dir, quads.get(0));
-		}
+	/** Allow re-use of instances to avoid allocation in render loop */
+	public void prepare(Sprite allSprite, boolean hasColor) {
+	    this.global = allSprite;
+        singleSprite = true;
+        globalHasColor = hasColor;
+        quads.clear();
 	}
+	
+	public SpriteSet(BakedModel model) {
+		prepare(model, ThreadLocalRandom.current());
+	}
+	
+	/** Allow re-use of instances to avoid allocation in render loop */
+    public void prepare(BakedModel model, Random rand) {
+        this.quads.clear();
+        for (Direction dir : Direction.values()) {
+            List<BakedQuad> quads = model.getQuads(null, dir, rand);
+            if (!quads.isEmpty()) this.quads.put(dir, quads.get(0));
+        }
+    }
 
 	public Sprite getSprite(Direction dir) {
 		if (singleSprite) return global;
