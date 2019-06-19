@@ -57,18 +57,19 @@ public class SlopeTestModel extends SimpleModel {
     private static final int TAG_BOTTOM = 4;
     
     private static void drawSlope(QuadEmitter quad, Direction dir) {
+        quad.tag(TAG_SLOPE);
         switch (dir) {
             case NORTH:
-                quad.tag(TAG_SLOPE).pos(0, 0f, 1f, 0f).pos(1, 0f, 0f, 1f).pos(2, 1f, 0f, 1f).pos(3, 1f, 1f, 0f).emit();
+                quad.pos(0, 0f, 1f, 0f).pos(1, 0f, 0f, 1f).pos(2, 1f, 0f, 1f).pos(3, 1f, 1f, 0f).emit();
                 break;
             case SOUTH:
-                quad.tag(TAG_SLOPE).pos(0, 0f, 0f, 0f).pos(1, 0f, 1f, 1f).pos(2, 1f, 1f, 1f).pos(3, 1f, 0f, 0f).emit();
+                quad.pos(0, 0f, 0f, 0f).pos(1, 0f, 1f, 1f).pos(2, 1f, 1f, 1f).pos(3, 1f, 0f, 0f).emit();
                 break;
             case EAST:
-                quad.tag(TAG_SLOPE).pos(0, 0f, 0f, 0f).pos(1, 0f, 0f, 1f).pos(2, 1f, 1f, 1f).pos(3, 1f, 1f, 0f).emit();
+                quad.pos(0, 0f, 0f, 0f).pos(1, 0f, 0f, 1f).pos(2, 1f, 1f, 1f).pos(3, 1f, 1f, 0f).emit();
                 break;
             case WEST:
-                quad.tag(TAG_SLOPE).pos(0, 0f, 1f, 0f).pos(1, 0f, 1f, 1f).pos(2, 1f, 0f, 1f).pos(3, 1f, 0f, 0f).emit();
+                quad.pos(0, 0f, 1f, 0f).pos(1, 0f, 1f, 1f).pos(2, 1f, 0f, 1f).pos(3, 1f, 0f, 0f).emit();
             default:
                 break;
         }
@@ -152,7 +153,7 @@ public class SlopeTestModel extends SimpleModel {
                 sprites.clear();
                 material = finder.clear().blendMode(0, BlockRenderLayer.CUTOUT).find();
             } else {
-                material = finder.clear().blendMode(0, block.getRenderLayer()).find();
+                material = finder.clear().disableDiffuse(0, false).disableAo(0, false).blendMode(0, block.getRenderLayer()).find();
                 BakedModel model = minecraft.getBlockRenderManager().getModel(template);
                 sprites.prepare(model, randomSupplier.get());
                 BlockColorProvider blockColor =  ColorProviderRegistry.BLOCK.get(block);
