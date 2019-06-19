@@ -5,7 +5,7 @@ import java.util.function.Supplier;
 
 import org.apache.commons.lang3.ObjectUtils;
 
-import io.github.cottonmc.slopetest.SpriteSet;
+import io.github.cottonmc.slopetest.util.SpriteSet;
 import net.fabricmc.fabric.api.client.render.ColorProviderRegistry;
 import net.fabricmc.fabric.api.renderer.v1.material.MaterialFinder;
 import net.fabricmc.fabric.api.renderer.v1.material.RenderMaterial;
@@ -59,7 +59,7 @@ public class SlopeTestModel extends SimpleModel {
     private static void drawSlope(QuadEmitter quad, Direction dir) {
         switch (dir) {
             case NORTH:
-                quad.tag(TAG_SLOPE).pos(0, 0f, 1f, 0f).pos(1, 0f, 0f, 1f).pos(2, 1f, 0f, 1f).pos(3, 1f, 1f, 1f).emit();
+                quad.tag(TAG_SLOPE).pos(0, 0f, 1f, 0f).pos(1, 0f, 0f, 1f).pos(2, 1f, 0f, 1f).pos(3, 1f, 1f, 0f).emit();
                 break;
             case SOUTH:
                 quad.tag(TAG_SLOPE).pos(0, 0f, 0f, 0f).pos(1, 0f, 1f, 1f).pos(2, 1f, 1f, 1f).pos(3, 1f, 0f, 0f).emit();
@@ -134,7 +134,7 @@ public class SlopeTestModel extends SimpleModel {
     
     private static class Transformer implements MeshTransformer {
         private final MinecraftClient minecraft = MinecraftClient.getInstance();
-        private final SpriteSet sprites = new SpriteSet(MissingSprite.getMissingSprite(), false);
+        private final SpriteSet sprites = new SpriteSet();
         private final MaterialFinder finder = RENDERER.materialFinder();
         
         private int color;
@@ -145,19 +145,19 @@ public class SlopeTestModel extends SimpleModel {
         public MeshTransformer prepare(ExtendedBlockView blockView, BlockState state, BlockPos pos, Supplier<Random> randomSupplier) {
             dir = state.get(Properties.HORIZONTAL_FACING);
             color = 0xffffff;
-            final Block block =  ObjectUtils.defaultIfNull((Block) ((RenderAttachedBlockView)blockView).getBlockEntityRenderAttachment(pos), Blocks.AIR);
+            final BlockState template =  ObjectUtils.defaultIfNull((BlockState) ((RenderAttachedBlockView)blockView).getBlockEntityRenderAttachment(pos), Blocks.AIR.getDefaultState());
+            final Block block = template.getBlock();
             
             if(block == Blocks.AIR) {
-                sprites.prepare(minecraft.getSpriteAtlas().getSprite("minecraft:block/scaffolding_top"), false);
+                sprites.clear();
                 material = finder.clear().blendMode(0, BlockRenderLayer.CUTOUT).find();
             } else {
                 material = finder.clear().blendMode(0, block.getRenderLayer()).find();
-                BlockState blockDefaultState = block.getDefaultState();
-                BakedModel model = minecraft.getBlockRenderManager().getModel(blockDefaultState);
+                BakedModel model = minecraft.getBlockRenderManager().getModel(template);
                 sprites.prepare(model, randomSupplier.get());
                 BlockColorProvider blockColor =  ColorProviderRegistry.BLOCK.get(block);
                 if (blockColor != null) {
-                    color = 0xff000000 | blockColor.getColor(blockDefaultState, blockView, pos, 1);
+                    color = 0xff000000 | blockColor.getColor(template, blockView, pos, 1);
                 }
             }
             return this;
@@ -165,10 +165,9 @@ public class SlopeTestModel extends SimpleModel {
 
         @Override
         public MeshTransformer prepare(ItemStack stack, Supplier<Random> randomSupplier) {
-            // TODO - get sprite from itemStack somehow
             dir = Direction.NORTH;
             color = 0xffffff;
-            sprites.prepare(minecraft.getSpriteAtlas().getSprite("minecraft:block/scaffolding_top"), false);
+            sprites.clear();
             material = finder.clear().find();
             return this;
         }

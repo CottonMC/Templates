@@ -8,6 +8,7 @@ import net.fabricmc.fabric.api.server.PlayerStream;
 import net.minecraft.block.BlockState;
 import net.minecraft.block.Blocks;
 import net.minecraft.block.entity.BlockEntity;
+import net.minecraft.client.world.ClientWorld;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.server.network.ServerPlayerEntity;
 
@@ -31,6 +32,9 @@ public class SlopeTestEntity extends BlockEntity implements BlockEntityClientSer
 	public void fromTag(CompoundTag tag) {
 		super.fromTag(tag);
 		renderedState = BlockStateUtil.fromTag(tag);
+		if (world.isClient) {
+		    ((ClientWorld)world).scheduleBlockRender(pos);
+		}
 	}
 
 	@Override

@@ -1,10 +1,12 @@
 package io.github.cottonmc.slopetest.util;
 
 import java.util.List;
-import java.util.Map;
 import java.util.Random;
 
-import io.netty.util.internal.ThreadLocalRandom;
+import org.apache.commons.lang3.ObjectUtils;
+
+import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
+import net.fabricmc.fabric.api.renderer.v1.model.ModelHelper;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.render.model.BakedModel;
 import net.minecraft.client.render.model.BakedQuad;
@@ -13,46 +15,38 @@ import net.minecraft.util.Identifier;
 import net.minecraft.util.math.Direction;
 
 public class SpriteSet {
-	private Sprite global;
-	private Map<Direction, BakedQuad> quads;
-	private boolean singleSprite = false;
-	private boolean globalHasColor = false;
+	private Object2ObjectOpenHashMap<Direction, BakedQuad> quads = new Object2ObjectOpenHashMap<>();
+	private boolean isDefault = true;
 	public static final Sprite FALLBACK = MinecraftClient.getInstance().getSpriteAtlas().getSprite(new Identifier("minecraft:block/scaffolding_top"));
 
-	public SpriteSet(Sprite allSprite, boolean hasColor) {
-	    prepare(allSprite, hasColor);
+	public SpriteSet() {
+	    clear();
 	}
 
 	/** Allow re-use of instances to avoid allocation in render loop */
-	public void prepare(Sprite allSprite, boolean hasColor) {
-	    this.global = allSprite;
-        singleSprite = true;
-        globalHasColor = hasColor;
-        quads.clear();
-	}
-	
-	public SpriteSet(BakedModel model) {
-		prepare(model, ThreadLocalRandom.current());
+	public void clear() {
+	    isDefault = true;
 	}
 	
 	/** Allow re-use of instances to avoid allocation in render loop */
+	//TODO: pass in block state?
     public void prepare(BakedModel model, Random rand) {
         this.quads.clear();
-        for (Direction dir : Direction.values()) {
+        isDefault = false;
+        // avoid Direction.values() in hot loop - for thread safety may generate new array instances
+        //for (Direction dir : Direction.values()) {
+        for(int i = 0; i < 6; i++) {
+            final Direction dir = ModelHelper.faceFromIndex(i);
             List<BakedQuad> quads = model.getQuads(null, dir, rand);
             if (!quads.isEmpty()) this.quads.put(dir, quads.get(0));
         }
     }
 
 	public Sprite getSprite(Direction dir) {
-		if (singleSprite) return global;
-		if (quads.get(dir) == null) return FALLBACK;
-		else return quads.get(dir).getSprite();
+		return isDefault ? FALLBACK : ObjectUtils.defaultIfNull(quads.get(dir).getSprite(), FALLBACK);
 	}
 
 	public boolean hasColor(Direction dir) {
-		if (singleSprite) return globalHasColor;
-		if (quads.get(dir) == null) return false;
-		else return quads.get(dir).hasColor();
+	    return isDefault ? false : ObjectUtils.defaultIfNull(quads.get(dir).hasColor(), false);
 	}
 }
