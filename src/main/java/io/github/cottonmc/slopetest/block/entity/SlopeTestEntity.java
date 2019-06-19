@@ -2,6 +2,7 @@ package io.github.cottonmc.slopetest.block.entity;
 
 import io.github.cottonmc.slopetest.SlopeTest;
 import net.fabricmc.fabric.api.block.entity.BlockEntityClientSerializable;
+import net.fabricmc.fabric.api.rendering.data.v1.RenderAttachmentBlockEntity;
 import net.fabricmc.fabric.api.server.PlayerStream;
 import net.minecraft.block.Block;
 import net.minecraft.block.Blocks;
@@ -11,9 +12,9 @@ import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.util.Identifier;
 import net.minecraft.util.registry.Registry;
 
-public class SlopeTestEntity extends BlockEntity implements BlockEntityClientSerializable {
+public class SlopeTestEntity extends BlockEntity implements BlockEntityClientSerializable, RenderAttachmentBlockEntity {
 	private Block renderedBlock = Blocks.AIR;
-
+	
 	public SlopeTestEntity() {
 		super(SlopeTest.SLOPE_ENTITY);
 	}
@@ -60,4 +61,9 @@ public class SlopeTestEntity extends BlockEntity implements BlockEntityClientSer
 			}
 		}
 	}
+
+    @Override
+    public Object getRenderAttachmentData() {
+        return renderedBlock;
+    }
 }

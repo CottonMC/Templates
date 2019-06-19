@@ -10,6 +10,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Random;
 
+import io.netty.util.internal.ThreadLocalRandom;
+
 public class SpriteSet {
 	Sprite global;
 	Map<Direction, BakedQuad> quads = new HashMap<>();
@@ -17,18 +19,28 @@ public class SpriteSet {
 	boolean globalHasColor = false;
 
 	public SpriteSet(Sprite allSprite, boolean hasColor) {
-		this.global = allSprite;
-		singleSprite = true;
-		globalHasColor = hasColor;
+	    prepare(allSprite, hasColor);
 	}
 
-	public SpriteSet(BakedModel model) {
-		Random rand = new Random();
-		for (Direction dir : Direction.values()) {
-			List<BakedQuad> quads = model.getQuads(null, dir, rand);
-			this.quads.put(dir, quads.get(0));
-		}
+	/** Allow re-use of instances to avoid allocation in render loop */
+	public void prepare(Sprite allSprite, boolean hasColor) {
+	    this.global = allSprite;
+        singleSprite = true;
+        globalHasColor = hasColor;
+        quads.clear();
 	}
+	
+	public SpriteSet(BakedModel model) {
+		prepare(model, ThreadLocalRandom.current());
+	}
+	
+	/** Allow re-use of instances to avoid allocation in render loop */
+    public void prepare(BakedModel model, Random rand) {
+        for (Direction dir : Direction.values()) {
+            List<BakedQuad> quads = model.getQuads(null, dir, rand);
+            this.quads.put(dir, quads.get(0));
+        }
+    }
 
 	public Sprite getSprite(Direction dir) {
 		if (singleSprite) return global;
